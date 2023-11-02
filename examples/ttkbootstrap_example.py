@@ -67,7 +67,14 @@ class SimpleFrame(BaseFrame):
 app = tk.Tk()
 app.geometry("400x300")
 frame = SimpleFrame(app)
-frame.update()
 frame.pack(fill='both', expand=True)
+# You may choose to repeatedly call refresh instead.
+# To do so set the refresh engine to 'loop'.
+# The default method 'callback' uses 
+# tkinter callbacks to trigger only refreshes on user input
+#
+# WARNING: Currently 'loop' does not play well with window resize and
+#          combobox widgets 
+# frame.set_refresh_engine('loop')
 frame.refresh()
 app.mainloop()

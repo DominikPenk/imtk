@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import tkinter as tk
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -57,16 +59,24 @@ class ImNamespace:
             raise RuntimeError("Namespace stack corrupted")
 
 
-class ImFrame(abc.ABC):
+class ImFrame(tk.Frame, abc.ABC):
     __active__ = []
 
-    def __init__(self):
+    def __init__(
+        self, 
+        master=None, 
+        refresh_mode:str='callback'
+    ):
+        tk.Frame.__init__(self, master=master, relief='flat')
+        abc.ABC.__init__(self)
         self._widgets: Dict[str, ImWidgetState] = dict()
         self.active_widget:str | None = None
         self._command_buffer: List[Callable[[], None]] = list()
         self._cursor_stack: List[ImCursor] = []
         self._namespaces: List[str] = []
         self._widget_factories = self.install_widgets()
+        self._refresh_mode = None
+        self._after_id = None
 
         # Get the scrollbar
         self.scrollbar = self.create_widget(
@@ -86,8 +96,10 @@ class ImFrame(abc.ABC):
         self._content_frame.propagate(0)
         self._content_frame.pack(side='top', anchor='w')
    
+        self.set_refresh_engine(refresh_mode, False)
 
-    def __enter__(self) -> 'ImFrame':
+
+    def __enter__(self) -> ImFrame:
         ImFrame.__active__.append(self)
 
 
@@ -158,8 +170,6 @@ class ImFrame(abc.ABC):
 
 
     def _hide_or_display_scrollbar(self, *args):
-        self.update()
-        self._content_frame.update()
         content_height = self._content_frame.winfo_reqheight()
         frame_height   = self.winfo_height()
 
@@ -175,6 +185,16 @@ class ImFrame(abc.ABC):
                 )
             first, _ = self.scrollbar.get()
             self.yview('moveto', str(first))
+
+
+    def set_refresh_engine(self, method:str, do_refresh:bool=True):
+        if method not in ['callback', 'loop']:
+            raise ValueError("method must be 'callback' or 'loop'")
+        self._refresh_mode = method
+        if self._after_id:
+            self.after_cancel(self._after_id)
+        if do_refresh:
+            self.refresh()
 
 
     def init_cursor(self) -> ImCursor:
@@ -195,7 +215,7 @@ class ImFrame(abc.ABC):
             self._content_frame.place(rely=-first*base)
 
 
-    def refresh(self, chain_once:bool=False) -> None:
+    def refresh(self) -> None:
         if self._cursor_stack:
             raise RuntimeError("The cursor stack is corrupted, it should be empty")
         
@@ -210,8 +230,6 @@ class ImFrame(abc.ABC):
                   f"but has size {len(self._cursor_stack)}" 
             raise RuntimeError(msg)
         
-        self.update()
-
         content_width, content_height = base_cursor.size
         self._content_frame.configure(
             width=content_width,
@@ -237,15 +255,23 @@ class ImFrame(abc.ABC):
         for info in self._widgets.values():
             info.drawn = False
 
+        should_recurse = self.active_widget is not None and self._refresh_mode == 'callback'
         self.active_widget = None
 
-        if chain_once:
+        if should_recurse:
+            # We need to call this recursively if something
+            # before the active object changed based on its activation
+            print("Recursive Refresh")
             self.refresh()
+        elif self._refresh_mode == 'loop':
+            self.update_idletasks()
+            self._after_id = self.after_idle(self.refresh)
 
 
     def set_active(self, identifier:str):
         self.active_widget = identifier
-        self.refresh(chain_once=True)
+        if self._refresh_mode == 'callback':
+            self.refresh()
 
 
     def namespace_push(self, name:str):
@@ -300,7 +326,7 @@ class ImFrame(abc.ABC):
     @abc.abstractmethod
     def draw(self) -> None:
         pass
-
+    
 
     @abc.abstractmethod
     def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:

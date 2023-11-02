@@ -97,7 +97,6 @@ class ImCursor(object):
             info.position = copy.copy(self.position)
             info.widget.place(x=info.position[0], y=info.position[1], **kwargs)
 
-        info.widget.update()
         self.row_height = max(self.row_height, info.widget.winfo_reqheight())
 
         self.position[0] += info.widget.winfo_reqwidth()

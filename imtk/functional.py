@@ -90,7 +90,6 @@ class _ImTKWidget:
             self.draw_fn(info, context)
 
         if context.active_widget == info.identifier:
-            context.active_widget = None
             return (True, *return_vals) if return_vals else True
         return (False, *return_vals) if return_vals else False
 
