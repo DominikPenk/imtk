@@ -196,7 +196,7 @@ class ImFrame(abc.ABC):
             self._content_frame.place(rely=-first*base)
 
 
-    def refresh(self) -> None:
+    def refresh(self, chain_once:bool=False) -> None:
         if self._cursor_stack:
             raise RuntimeError("The cursor stack is corrupted, it should be empty")
         
@@ -240,10 +240,13 @@ class ImFrame(abc.ABC):
 
         self.active_widget = None
 
+        if chain_once:
+            self.refresh()
+
 
     def set_active(self, identifier:str):
         self.active_widget = identifier
-        self.refresh()
+        self.refresh(chain_once=True)
 
 
     def namespace_push(self, name:str):
@@ -276,6 +279,10 @@ class ImFrame(abc.ABC):
         return self._cursor_stack.pop()
 
 
+    def get_current_content_frame(self):
+        return self.cursor.get_frame_widget() or self._content_frame
+
+
     def create_widget(
         self, 
         type:str, 
@@ -287,7 +294,7 @@ class ImFrame(abc.ABC):
             msg = f"Widget '{type}' was not installed with your backend implementation" \
                    "check out the 'install_widgets' method."
             raise RuntimeError(msg)
-        master = master or self.cursor.get_frame_widget() or self._content_frame
+        master = master or self.get_current_content_frame()
         return self._widget_factories[type](master=master, **kwargs)
 
 

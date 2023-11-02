@@ -3,6 +3,7 @@ from .cursor import ImCursor
 from .frames import *
 from .functional import *
 from .images import *
+from .plot import *
 
 # TODO: Check if 3rd party packages are available
 # from .backends.tk_impl import TKFrame
