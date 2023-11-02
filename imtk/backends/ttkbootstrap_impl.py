@@ -22,5 +22,7 @@ class TTKBootstrapFrame(ttkbootstrap.Frame, ImFrame):
             'spinbox': ttkbootstrap.Spinbox,
             'progressbar': ttkbootstrap.Progressbar,
             'separator': ttkbootstrap.Separator,
-            'scrollbar': ttkbootstrap.Scrollbar
+            'scrollbar': ttkbootstrap.Scrollbar,
+            'labelframe': ttkbootstrap.LabelFrame,
+            'frame': ttkbootstrap.Frame
         }

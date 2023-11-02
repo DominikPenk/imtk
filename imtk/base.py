@@ -65,7 +65,7 @@ class ImFrame(abc.ABC):
         self._widgets: Dict[str, ImWidgetState] = dict()
         self.active_widget:str | None = None
         self._command_buffer: List[Callable[[], None]] = list()
-        self._cursor: ImCursor = None
+        self._cursor_stack: List[ImCursor] = []
         self._namespaces: List[str] = []
         self._widget_factories = self.install_widgets()
 
@@ -90,6 +90,7 @@ class ImFrame(abc.ABC):
 
     def __enter__(self) -> 'ImFrame':
         ImFrame.__active__.append(self)
+
 
     def __exit__(self, *args):
         active = ImFrame.__active__.pop()
@@ -195,15 +196,24 @@ class ImFrame(abc.ABC):
             self._content_frame.place(rely=-first*base)
 
 
-    def refresh(self, repeat_once:bool=False) -> None:
-        self._cursor: ImCursor = self.init_cursor()
-
+    def refresh(self) -> None:
+        if self._cursor_stack:
+            raise RuntimeError("The cursor stack is corrupted, it should be empty")
+        
+        base_cursor = self.push_cursor()
         with self:
             self.draw()
 
+        self.pop_cursor()
+        if self._cursor_stack:
+            msg = f"The cursor stack is corrupted, " \
+                  f"it should be empty, " \
+                  f"but has size {len(self._cursor_stack)}" 
+            raise RuntimeError(msg)
+        
         self.update()
 
-        content_width, content_height = self._cursor.size
+        content_width, content_height = base_cursor.size
         self._content_frame.configure(
             width=content_width,
             height=content_height
@@ -228,14 +238,12 @@ class ImFrame(abc.ABC):
         for info in self._widgets.values():
             info.drawn = False
 
-        # If an active
-        if repeat_once:
-            self.refresh()
-        
+        self.active_widget = None
+
 
     def set_active(self, identifier:str):
         self.active_widget = identifier
-        self.refresh(repeat_once=True)
+        self.refresh()
 
 
     def namespace_push(self, name:str):
@@ -254,12 +262,32 @@ class ImFrame(abc.ABC):
         return f"{self.current_namespace}::{val}" if self.current_namespace else val
 
 
-    def create_widget(self, type:str, *, master:tk.Widget=None, **kwargs) -> tk.Widget:
+    def push_cursor(self, cursor:ImCursor | None = None) -> ImCursor:
+        parent = self._cursor_stack[-1] if self._cursor_stack else None
+        cursor = cursor or self.init_cursor()
+        cursor.parent = parent
+        self._cursor_stack.append(cursor)
+        return cursor
+    
+    
+    def pop_cursor(self) -> ImCursor:
+        if not self._cursor_stack:
+            raise RuntimeError("The cursor stack was corrupted. No active cursor")
+        return self._cursor_stack.pop()
+
+
+    def create_widget(
+        self, 
+        type:str, 
+        *, 
+        master:tk.Widget=None, 
+        **kwargs
+    ) -> tk.Widget:
         if type not in self._widget_factories:
             msg = f"Widget '{type}' was not installed with your backend implementation" \
                    "check out the 'install_widgets' method."
             raise RuntimeError(msg)
-        master = master or self._content_frame
+        master = master or self.cursor.get_frame_widget() or self._content_frame
         return self._widget_factories[type](master=master, **kwargs)
 
 
@@ -283,7 +311,9 @@ class ImFrame(abc.ABC):
 
     @property
     def cursor(self) -> ImCursor:
-        return self._cursor
+        if not self._cursor_stack:
+            raise RuntimeError("No active cursor found")
+        return self._cursor_stack[-1]
 
 
 def get_context() -> ImFrame:

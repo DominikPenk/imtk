@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import tkinter as tk
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from . import base
@@ -31,13 +32,37 @@ class SameRowContext:
 
 
 class ImCursor(object):
-    def __init__(self):
+    def __init__(self, parent:'ImCursor' | None = None):
         self.stay_in_row: bool | SameRowContext = False
         self.padding    = 5
         self.position   = [self.padding, self.padding]
         self.row_height = 0
         self.col_width  = 0
+        self.frame: base.ImWidgetState | None = None
+        self.parent = parent
+        # For some reason we need to add a little bit of height for labelframe
+        # TODO: find out why and fix it
+        self._frame_end_padding: int = 0  
 
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *args):
+        context = base.get_context()
+        top_cursor = context.pop_cursor()
+        if top_cursor != self:
+            raise RuntimeError("The cursor context is corrupted")
+        
+        if self.parent and self.frame:
+            if context.cursor != self.parent:
+                raise RuntimeError("The cursor stack is corrupted. "
+                                   "The active cursor is not the parent")
+
+            w, h = self.size            
+            self.frame.widget.configure(width=w, height=h+self._frame_end_padding)
+            self.parent.add_widget(self.frame, context)
+        
 
     def move(self, dx:float|None, dy:float|None):
         if dx is not None:
@@ -81,6 +106,12 @@ class ImCursor(object):
         info.drawn = True
 
 
+    def get_frame_widget(self) -> tk.Widget | None:
+        if self.frame is None:
+            return None
+        else:
+            return self.frame.widget
+
     def same_row(self) -> None:
         self.stay_in_row = True
 
@@ -91,5 +122,5 @@ class ImCursor(object):
 
     @property
     def size(self) -> Tuple[int, int]:
-        return self.col_width, self.position[1] + self.row_height
+        return self.col_width + self.padding, self.position[1] + self.row_height + self.padding
 

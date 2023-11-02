@@ -1,6 +1,7 @@
 from .base import ImFrame, ImNamespace
 from .cursor import ImCursor
 from .functional import *
+from .frames import *
 
 # TODO: Check if 3rd party packages are available
 # from .backends.tk_impl import TKFrame

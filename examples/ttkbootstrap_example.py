@@ -21,11 +21,13 @@ class SimpleFrame(BaseFrame):
                f"The int    {self.int_val}"
         imtk.text(text, "test")
         changed, self.checked = imtk.checkbox("Checkbox", self.checked)
-        for i in range(9):
-            if i % 3 != 0:
-                imtk.same_row()
-            if imtk.button(f"Button#{i}"):
-                print(f"Button {i} was pressed")
+
+        with imtk.labelframe("Buttons in a Grid"):
+            for i in range(9):
+                if i % 3 != 0:
+                    imtk.same_row()
+                if imtk.button(f"Button#{i}"):
+                    print(f"Button {i} was pressed")
 
 
         if changed:
@@ -33,7 +35,7 @@ class SimpleFrame(BaseFrame):
 
         imtk.horizontal_separator("a separator", bootstyle='info')
 
-        with imtk.row():
+        with imtk.frame("This frame is invisible"), imtk.row():
             for i in range(2):
                 if imtk.button(f"Row Button#{i}", bootstyle='outline danger'):
                     print(f"Row Button {i} pressed")

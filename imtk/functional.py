@@ -2,9 +2,7 @@ import tkinter as tk
 from functools import update_wrapper
 from typing import Any, Callable, Optional, Sequence, Tuple, Type
 
-import tkinter as ttk
-
-from . import base as base
+from . import base
 from .base import ImWidgetState
 
 __all__ = [
@@ -481,7 +479,6 @@ def progress_bar(
     value:float, 
     min_:float=0.0,
     max_:float=1.0,
-    length:int=100,
     label_position:str='right',
     show_progress:bool=False,
     **kwargs
@@ -495,7 +492,7 @@ def progress_bar(
     
     if info is None:
         var = tk.IntVar()
-        bar:ttk.Progressbar = context.create_widget(
+        bar = context.create_widget(
             'progressbar',
             variable=var,
             **kwargs

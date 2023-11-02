@@ -21,5 +21,7 @@ class TTKFrame(ttk.Frame, ImFrame):
             'scale': ttk.Scale,
             'spinbox': ttk.Spinbox,
             'progressbar': ttk.Progressbar,
-            'scrollbar': ttk.Scrollbar
+            'scrollbar': ttk.Scrollbar,
+            'labelframe': ttk.LabelFrame,
+            'frame': ttk.Frame
         }

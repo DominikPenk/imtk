@@ -17,5 +17,7 @@ class TKFrame(tk.Frame, ImFrame):
             'label': tk.Label,
             'scale': tk.Scale,
             'spinbox': tk.Spinbox,
-            'scrollbar': tk.Scrollbar
+            'scrollbar': tk.Scrollbar,
+            'labelframe': tk.LabelFrame,
+            'frame': tk.Frame
         }
