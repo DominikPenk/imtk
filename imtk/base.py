@@ -1,6 +1,5 @@
 import abc
 import tkinter as tk
-import tkinter.ttk as ttk
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from .cursor import ImCursor
 

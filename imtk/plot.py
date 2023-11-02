@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.artist import Artist
 import tkinter as tk
 from typing import Callable
-from tkinter import Pack, Place, Grid
 
 
 from . import base

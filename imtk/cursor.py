@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import tkinter as tk
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from . import base
 
