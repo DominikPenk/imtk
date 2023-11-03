@@ -1,4 +1,4 @@
-from .base import ImFrame, ImNamespace
+from .base import ImContext, ImNamespace
 from .cursor import ImCursor
 from .frames import *
 from .functional import *

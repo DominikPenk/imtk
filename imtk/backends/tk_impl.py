@@ -1,13 +1,13 @@
 import tkinter as tk
 from typing import Any, Callable, Dict
 
-from ..base import ImFrame
+from ..base import ImContext
 
 
-class TKFrame(tk.Frame, ImFrame):
+class TKFrame(tk.Frame, ImContext):
     def __init__(self, master=None, **kwargs):
         tk.Frame.__init__(self, master, **kwargs)
-        ImFrame.__init__(self)
+        ImContext.__init__(self)
 
     def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
         return {

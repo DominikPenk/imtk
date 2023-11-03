@@ -3,13 +3,13 @@ from typing import Any, Callable, Dict
 
 import tkinter.ttk as ttk
 
-from ..base import ImFrame
+from ..base import ImContext
 
 
-class TTKFrame(ttk.Frame, ImFrame):
+class TTKFrame(ttk.Frame, ImContext):
     def __init__(self, master=None, **kwargs):
         ttk.Frame.__init__(self, master, **kwargs)
-        ImFrame.__init__(self)
+        ImContext.__init__(self)
 
     def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
         return {

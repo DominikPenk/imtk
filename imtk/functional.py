@@ -39,7 +39,7 @@ def _strip_label(label:str):
 
 
 # Cursor methods
-def same_row(context:Optional[base.ImFrame]=None):
+def same_row(context:Optional[base.ImContext]=None):
     """Ensure the next widget is placed in the same row as the previous one.
 
     Args:
@@ -49,7 +49,7 @@ def same_row(context:Optional[base.ImFrame]=None):
     context.cursor.same_row()
 
 
-def row(context:Optional[base.ImFrame]=None):
+def row(context:Optional[base.ImContext]=None):
     """Start a new row for placing widgets.
     
     Args:
@@ -83,7 +83,7 @@ class _ImTKWidget:
         else:
             return_vals = None
 
-        context: base.ImFrame = base.get_context()
+        context: base.ImContext = base.get_context()
         if self.draw_fn is None:
             context.cursor.add_widget(info)
         else:
@@ -100,7 +100,7 @@ def imtk_widget(draw_fn=None, doc=None):
     return _imtk_widget
 
 
-def _draw_widget_with_label(info:ImWidgetState, context:base.ImFrame):
+def _draw_widget_with_label(info:ImWidgetState, context:base.ImContext):
     label_text:str = info.custom_data['label_text']
     label_first:bool = info.custom_data['label_first']
 
@@ -522,7 +522,7 @@ def progress_bar(
 @progress_bar.draw
 def progress_bar(
     info:ImWidgetState,
-    context:base.ImFrame
+    context:base.ImContext
 ) -> None:
     label_text:str = info.custom_data['label_text']
     label_first:bool = info.custom_data['label_first']
@@ -569,6 +569,6 @@ def horizontal_separator(identifier:str, width:int=None, relwidth:float=0.95, **
 
 
 @horizontal_separator.draw
-def horizontal_separator(info:ImWidgetState, context:base.ImFrame):
+def horizontal_separator(info:ImWidgetState, context:base.ImContext):
     cursor = context.cursor
     cursor.add_widget(info, context, **info.custom_data)

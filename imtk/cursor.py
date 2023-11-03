@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 from . import base
 
 if TYPE_CHECKING:
-    from .base import ImFrame, ImWidgetState
+    from .base import ImContext, ImWidgetState
 
 
 class SameRowContext:
@@ -74,7 +74,7 @@ class ImCursor(object):
     def add_widget(
         self, 
         info:ImWidgetState,
-        context:Optional[ImFrame]=None,
+        context:Optional[ImContext]=None,
         **kwargs
     ) -> None:
         context = context or base.get_context()

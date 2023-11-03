@@ -9,7 +9,7 @@ __all__ = [
 
 def frame(
     identifier:str,
-    context: base.ImFrame | None = None,
+    context: base.ImContext | None = None,
     **kwargs
 ) -> ImCursor:
     # Create the widget and add it
@@ -33,7 +33,7 @@ def frame(
 
 def labelframe(
     label:str,
-    context: base.ImFrame | None = None,
+    context: base.ImContext | None = None,
     **kwargs
 ) -> ImCursor:
     # Create the widget and add it

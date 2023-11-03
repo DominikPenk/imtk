@@ -46,7 +46,7 @@ class ImNamespace:
         context (ImFrame): The parent frame to which this namespace belongs.
         name (str): The name of the namespace.
     """
-    def __init__(self, context:'ImFrame', name:str):
+    def __init__(self, context:'ImContext', name:str):
         self.context = context
         self.name = name
 
@@ -59,20 +59,18 @@ class ImNamespace:
             raise RuntimeError("Namespace stack corrupted")
 
 
-class ImFrame(tk.Frame, abc.ABC):
-    __active__: ImFrame | None = None
+class ImContext(abc.ABC):
+    __active__: ImContext | None = None
 
     def __init__(
         self, 
-        master=None, 
         refresh_mode:str='callback',
         loop_frequency:int=50
     ):
-        tk.Frame.__init__(self, master=master, relief='flat')
-        abc.ABC.__init__(self)
+        # abc.ABC.__init__(self)
+        super().__init__()
         self._widgets: Dict[str, ImWidgetState] = dict()
         self.active_widget:str | None = None
-        self._command_buffer: List[Callable[[], None]] = list()
         self._cursor_stack: List[ImCursor] = []
         self._namespaces: List[str] = []
         self._widget_factories = self.install_widgets()
@@ -96,21 +94,24 @@ class ImFrame(tk.Frame, abc.ABC):
 
         self._content_frame = tk.Frame(self)
         self._content_frame.propagate(0)
-        self._content_frame.pack(side='top', anchor='w')
+
+        # Ensure that the scroll bar is always in front of the content
+        self.scrollbar.lift(self._content_frame)
+
    
         self.set_refresh_engine(refresh_mode, False)
 
 
-    def __enter__(self) -> ImFrame:
-        if ImFrame.__active__ is not None:
+    def __enter__(self) -> ImContext:
+        if ImContext.__active__ is not None:
             raise RuntimeError("Tried to active a frame but there is already an active one")
-        ImFrame.__active__ = self
+        ImContext.__active__ = self
 
 
     def __exit__(self, *args):
-        if ImFrame.__active__ != self:
+        if ImContext.__active__ != self:
             raise RuntimeError("ImFrame __active__ corrupted")
-        ImFrame.__active__ = None
+        ImContext.__active__ = None
         
 
     def _get_scroll_measure(self):
@@ -184,8 +185,9 @@ class ImFrame(tk.Frame, abc.ABC):
             if not self.scrollbar.winfo_ismapped():
                 self.scrollbar.place(
                     relx=1.0, 
-                    x=-self.scrollbar.winfo_reqwidth(),
-                    relheight=1.0
+                    rely=0.0,
+                    relheight=1.0,
+                    anchor='ne'
                 )
             first, _ = self.scrollbar.get()
             self.yview('moveto', str(first))
@@ -222,7 +224,7 @@ class ImFrame(tk.Frame, abc.ABC):
     def refresh(self) -> None:
         # Prevent interlaced refesh calles due to parallelism
         # Maybe use a lock instead?
-        if ImFrame.__active__:
+        if ImContext.__active__:
             return
 
         if self._cursor_stack:
@@ -239,18 +241,6 @@ class ImFrame(tk.Frame, abc.ABC):
                   f"but has size {len(self._cursor_stack)}" 
             raise RuntimeError(msg)
         
-        content_width, content_height = base_cursor.size
-        self._content_frame.configure(
-            width=content_width,
-            height=content_height
-        )
-
-        self._hide_or_display_scrollbar()
-
-
-        for cmd in self._command_buffer:
-            cmd()
-
         # remove not drawn widgets
         widgets_to_remove = [
             key for key, info in self._widgets.items() if not info.drawn
@@ -259,8 +249,15 @@ class ImFrame(tk.Frame, abc.ABC):
             info = self._widgets.pop(key)
             info.widget.destroy()
 
+        content_width, content_height = base_cursor.size
+        self._content_frame.configure(
+            width=content_width,
+            height=content_height
+        )
+
+        self._hide_or_display_scrollbar()
+
         # Reset the information from this refresh call
-        self._command_buffer.clear()
         for info in self._widgets.values():
             info.drawn = False
 
@@ -356,17 +353,17 @@ class ImFrame(tk.Frame, abc.ABC):
         return self._cursor_stack[-1]
 
 
-def get_context() -> ImFrame:
-    if ImFrame.__active__ is None:
+def get_context() -> ImContext:
+    if ImContext.__active__ is None:
         raise RuntimeError("No active context")
-    return ImFrame.__active__
+    return ImContext.__active__
 
 
-def namespace(name:str, context:Optional[ImFrame]=None) -> ImNamespace:
+def namespace(name:str, context:Optional[ImContext]=None) -> ImNamespace:
     context = context or get_context()
     return context.namespace(name)
 
 
-def get_identifier(val:str, context:Optional[ImFrame]=None) -> str:
+def get_identifier(val:str, context:Optional[ImContext]=None) -> str:
     context = context or get_context()
     return context.get_identifier(val)
