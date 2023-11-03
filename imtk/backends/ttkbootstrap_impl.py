@@ -28,3 +28,13 @@ class TTKBootstrapFrame(ttkbootstrap.Frame, ImContext):
     def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
         return TTKBOOTSTRA_WIDGET_FACTORIES
     
+
+class TTKBootstrapWindow(ttkbootstrap.Window, ImContext):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        ImContext.__init__(self)
+
+        self.after_idle(self.refresh)
+
+    def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
+        return TTKBOOTSTRA_WIDGET_FACTORIES

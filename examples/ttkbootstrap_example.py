@@ -1,12 +1,11 @@
 import imtk
-import tkinter as tk
 
 # Select your implementation by importing the desired Frame
-from imtk.backends.ttkbootstrap_impl import TTKBootstrapFrame as BaseFrame
+from imtk.backends.ttkbootstrap_impl import TTKBootstrapWindow
 
-class SimpleFrame(BaseFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
+class SimpleApp(TTKBootstrapWindow):
+    def __init__(self, **kwargs):
+        super().__init__(title="TTKBootstrap Example", **kwargs)
         self.checked = True
         self.input_text = "Write here ..."
         self.float_val = 1.0
@@ -64,17 +63,16 @@ class SimpleFrame(BaseFrame):
         _, self.int_val = imtk.int_slider("An int", self.int_val, bootstyle='warning')
         _, self.int_val = imtk.input_int('An int#spin', self.int_val)
 
-app = tk.Tk()
-app.geometry("400x300")
-frame = SimpleFrame(app)
-frame.pack(fill='both', expand=True)
-# You may choose to repeatedly call refresh instead.
-# To do so set the refresh engine to 'loop'.
-# The default method 'callback' uses 
-# tkinter callbacks to trigger only refreshes on user input
-#
-# WARNING: Currently 'loop' does not play well with window resize and
-#          combobox widgets 
-# frame.set_refresh_engine('loop')
-frame.refresh()
-app.mainloop()
+
+if __name__ == '__main__':
+    app = SimpleApp()
+    app.geometry("400x300")
+    # You may choose to repeatedly call refresh instead.
+    # To do so set the refresh engine to 'loop'.
+    # The default method 'callback' uses 
+    # tkinter callbacks to trigger only refreshes on user input
+    #
+    # WARNING: Currently 'loop' does not play well with window resize and
+    #          combobox widgets 
+    # app.set_refresh_engine('loop')
+    app.mainloop()

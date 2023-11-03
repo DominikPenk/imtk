@@ -1,15 +1,16 @@
-import imtk
-import ttkbootstrap as ttk
 import matplotlib.pyplot as plt
 import numpy as np
 
-from imtk.backends.ttkbootstrap_impl import TTKBootstrapFrame as BaseFrame
+import imtk
+from imtk.backends.ttkbootstrap_impl import TTKBootstrapWindow as Window
 
-class PlotFrame(BaseFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
+
+class PlotApp(Window):
+    def __init__(self, **kwargs):
         self.plot = imtk.Plot()
         self.num_plots = 2
+        
+        super().__init__(**kwargs)
 
         with self.plot:
             x = np.linspace(0, 1, 100)
@@ -17,8 +18,6 @@ class PlotFrame(BaseFrame):
             plt.plot(x, np.log(1 + x))
 
     def draw(self):
-        
-
         imtk.plot(
             f"Plot with {self.num_plots} graphs", 
             self.plot,
@@ -34,9 +33,6 @@ class PlotFrame(BaseFrame):
                 plt.plot(x, x**e)
 
 
-
-app = ttk.Window()
-frame = PlotFrame(app)
-frame.pack(fill='both', expand=True)
-frame.refresh()
-app.mainloop()
+if __name__ == '__main__':
+    app = PlotApp()
+    app.mainloop()

@@ -93,7 +93,7 @@ class ImContext(abc.ABC):
         self.bind("<Leave>", self._del_scroll_binding, "+")
 
         self._content_frame = tk.Frame(self)
-        self._content_frame.propagate(0)
+        # self._content_frame.propagate(0)
 
         # Ensure that the scroll bar is always in front of the content
         self.scrollbar.lift(self._content_frame)
