@@ -60,12 +60,13 @@ class ImNamespace:
 
 
 class ImFrame(tk.Frame, abc.ABC):
-    __active__ = []
+    __active__: ImFrame | None = None
 
     def __init__(
         self, 
         master=None, 
-        refresh_mode:str='callback'
+        refresh_mode:str='callback',
+        loop_frequency:int=50
     ):
         tk.Frame.__init__(self, master=master, relief='flat')
         abc.ABC.__init__(self)
@@ -77,6 +78,7 @@ class ImFrame(tk.Frame, abc.ABC):
         self._widget_factories = self.install_widgets()
         self._refresh_mode = None
         self._after_id = None
+        self.loop_frequency = loop_frequency
 
         # Get the scrollbar
         self.scrollbar = self.create_widget(
@@ -100,13 +102,15 @@ class ImFrame(tk.Frame, abc.ABC):
 
 
     def __enter__(self) -> ImFrame:
-        ImFrame.__active__.append(self)
+        if ImFrame.__active__ is not None:
+            raise RuntimeError("Tried to active a frame but there is already an active one")
+        ImFrame.__active__ = self
 
 
     def __exit__(self, *args):
-        active = ImFrame.__active__.pop()
-        if active != self:
-            raise RuntimeError("ImFrame stack corrupted")
+        if ImFrame.__active__ != self:
+            raise RuntimeError("ImFrame __active__ corrupted")
+        ImFrame.__active__ = None
         
 
     def _get_scroll_measure(self):
@@ -216,6 +220,11 @@ class ImFrame(tk.Frame, abc.ABC):
 
 
     def refresh(self) -> None:
+        # Prevent interlaced refesh calles due to parallelism
+        # Maybe use a lock instead?
+        if ImFrame.__active__:
+            return
+
         if self._cursor_stack:
             raise RuntimeError("The cursor stack is corrupted, it should be empty")
         
@@ -261,11 +270,10 @@ class ImFrame(tk.Frame, abc.ABC):
         if should_recurse:
             # We need to call this recursively if something
             # before the active object changed based on its activation
-            print("Recursive Refresh")
             self.refresh()
         elif self._refresh_mode == 'loop':
-            self.update_idletasks()
-            self._after_id = self.after_idle(self.refresh)
+            self._after_id = self.after(self.loop_frequency, self.refresh)
+            # self._after_id = self.after_idle(self.refresh)
 
 
     def set_active(self, identifier:str):
@@ -349,9 +357,9 @@ class ImFrame(tk.Frame, abc.ABC):
 
 
 def get_context() -> ImFrame:
-    if len(ImFrame.__active__) == 0:
+    if ImFrame.__active__ is None:
         raise RuntimeError("No active context")
-    return ImFrame.__active__[-1]
+    return ImFrame.__active__
 
 
 def namespace(name:str, context:Optional[ImFrame]=None) -> ImNamespace:
