@@ -36,6 +36,11 @@ class ImWidgetState(object):
         self.drawn = drawn
         self.custom_data = custom_data or dict()
         self.identifier = identifier
+        self._active = False
+
+
+    def __bool__(self) -> bool:
+        return self._active
 
 
 class ImNamespace:

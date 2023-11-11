@@ -54,7 +54,7 @@ class ImCursor(object):
         if top_cursor != self:
             raise RuntimeError("The cursor context is corrupted")
         
-        if self.parent and self.frame:
+        if self.parent and self.frame is not None:
             if context.cursor != self.parent:
                 raise RuntimeError("The cursor stack is corrupted. "
                                    "The active cursor is not the parent")

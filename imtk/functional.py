@@ -1,5 +1,5 @@
 import tkinter as tk
-from functools import update_wrapper
+from functools import update_wrapper, wraps
 from typing import Any, Callable, Optional, Sequence, Tuple, Type
 
 from . import base
@@ -59,45 +59,28 @@ def row(context:Optional[base.ImContext]=None):
     return context.cursor.row()
 
 
-class _ImTKWidget:
-    def __init__(
-        self,
-        info_fn,
-        draw_fn=None,
-        doc=None
-    ) -> None:
-        self.info_fn = info_fn
-        self.draw_fn = draw_fn
-        self.__doc__ = doc or info_fn.__doc__ or draw_fn.__doc__
-        update_wrapper(self, info_fn)
+def imtk_widget(draw_fn=None):
+    def _wrapper(info_fn):
+        @wraps(info_fn)
+        def wrapped_function(*args, **kwargs):
+            info_ret = info_fn(*args, **kwargs)
+            info = info_ret[0] if isinstance(info_ret, Sequence) else info_ret
 
-        # self.__call__.__doc__ = info_fn.__doc__
+            context: base.ImContext = base.get_context()
+            wrapped_function.draw(info, context)
 
-    def draw(self, draw_fn):
-        return _ImTKWidget(self.info_fn, draw_fn, self.__doc__)
-
-    def __call__(self, *args, **kwargs):
-        info = self.info_fn(*args, **kwargs)
-        if isinstance(info, Sequence):
-            info, return_vals = info[0], info[1:]
+            info._active = context.active_widget == info.identifier
+            return info_ret
+        
+        if draw_fn is None:
+            def default_draw_fn(info, context):
+                context.cursor.add_widget(info)
+            wrapped_function.draw = default_draw_fn
         else:
-            return_vals = None
+            wrapped_function.draw = draw_fn
 
-        context: base.ImContext = base.get_context()
-        if self.draw_fn is None:
-            context.cursor.add_widget(info)
-        else:
-            self.draw_fn(info, context)
-
-        if context.active_widget == info.identifier:
-            return (True, *return_vals) if return_vals else True
-        return (False, *return_vals) if return_vals else False
-
-
-def imtk_widget(draw_fn=None, doc=None):
-    def _imtk_widget(fn):
-        return _ImTKWidget(fn, draw_fn, doc)
-    return _imtk_widget
+        return wrapped_function
+    return _wrapper
 
 
 def _draw_widget_with_label(info:ImWidgetState, context:base.ImContext):
@@ -145,7 +128,29 @@ def text(text:str, identifier:Optional[str]=None) -> ImWidgetState:
 
 
 @imtk_widget()
-def button(text:str, **kwargs) -> ImWidgetState:
+def button(text:str, **kwargs:dict[str, Any]) -> ImWidgetState:
+    """A simple button widget.
+
+    Example:
+    ```python
+    if imtk.button("A Button"):
+        print("Button was pressed")
+    ```
+
+    Args:
+        text (str): Text on the button
+
+    Keyword Args:
+        **kwargs: These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.button.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/button.html).
+    
+    Note:
+        You should never manually set the following arguments: *parent, text and command*
+
+    Returns:
+        ImWidgetState: State of the widget. Can be used as a boolean to check if it was clicked. 
+    """
     context = base.get_context()
     
     idx = context.get_identifier(text)
@@ -472,7 +477,27 @@ def combo_box(
     return info, info.widget.current()
 
 
-@imtk_widget()
+def progress_bar_draw(
+    info:ImWidgetState,
+    context:base.ImContext
+) -> None:
+    label_text:str = info.custom_data['label_text']
+    label_first:bool = info.custom_data['label_first']
+    show_progress:bool = info.custom_data['show_progress']
+
+    with context.cursor.row():
+        if label_text and label_first:
+            text(text=label_text, identifier=f"{info.identifier}#label")
+
+        context.cursor.add_widget(info, context)
+    
+        if show_progress:
+            text(text=f"{info.custom_data['progress'].get()}%", identifier=f"{info.identifier}#progress")
+
+        if not label_first and label_text:
+            text(text=_strip_label(label_text), identifier=f"{info.identifier}#label")
+
+@imtk_widget(draw_fn=progress_bar_draw)
 def progress_bar(
     label:str, 
     value:float, 
@@ -519,29 +544,11 @@ def progress_bar(
     return info
 
 
-@progress_bar.draw
-def progress_bar(
-    info:ImWidgetState,
-    context:base.ImContext
-) -> None:
-    label_text:str = info.custom_data['label_text']
-    label_first:bool = info.custom_data['label_first']
-    show_progress:bool = info.custom_data['show_progress']
+def horizontal_separator_draw(info:ImWidgetState, context:base.ImContext):
+    cursor = context.cursor
+    cursor.add_widget(info, context, **info.custom_data)
 
-    with context.cursor.row():
-        if label_text and label_first:
-            text(text=label_text, identifier=f"{info.identifier}#label")
-
-        context.cursor.add_widget(info, context)
-    
-        if show_progress:
-            text(text=f"{info.custom_data['progress'].get()}%", identifier=f"{info.identifier}#progress")
-
-        if not label_first and label_text:
-            text(text=_strip_label(label_text), identifier=f"{info.identifier}#label")
-
-
-@imtk_widget()
+@imtk_widget(draw_fn=horizontal_separator_draw)
 def horizontal_separator(identifier:str, width:int=None, relwidth:float=0.95, **kwargs):
     context = base.get_context()
 
@@ -566,9 +573,3 @@ def horizontal_separator(identifier:str, width:int=None, relwidth:float=0.95, **
         'relwidth': relwidth
     })
     return info
-
-
-@horizontal_separator.draw
-def horizontal_separator(info:ImWidgetState, context:base.ImContext):
-    cursor = context.cursor
-    cursor.add_widget(info, context, **info.custom_data)

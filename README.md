@@ -5,7 +5,8 @@ This project tries to implement an immediate GUI framework with a similar API to
 
 ## TODOS
 - [x] Scrolling for ImFrame
-- [ ] Add a window implementation
-- [ ] Tick and Callback mode for calling *refresh*
+- [x] Add a window implementation
+- [x] Tick and Callback mode for calling *refresh*
 - [ ] Split [functions.py](imtk/functional.py) into multiple files
 - [ ] An actually useful README and docs :-)
+- [ ] Rework scrolling (I think using a canvas should be better)
