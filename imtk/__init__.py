@@ -1,5 +1,6 @@
 from .base import ImContext, ImNamespace
 from .cursor import ImCursor
+from .layout import *
 from .frames import *
 from .functional import *
 from .images import *

@@ -1,0 +1,50 @@
+site_name: ImTk
+repo_url: https://github.com/DominikPenk/imtk
+repo_name: DominikPenk/ImTk
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.indexes
+  icon:
+    logo: material/view-dashboard
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: false
+            show_source: false
+            show_root_toc_entry: false
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.snippets
+
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/DominikPenk/imtk
+
+nav:
+  - Home: 
+    - index.md
+  - "Getting Started":
+    - install.md
+    - tutorial.md
+  - API:
+    - functional.md
+    - layout.md
+    - widgets.md
+
+watch:
+  - "../imtk"

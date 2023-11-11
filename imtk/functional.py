@@ -1,14 +1,11 @@
 import tkinter as tk
-from functools import update_wrapper, wraps
+from functools import wraps
 from typing import Any, Callable, Optional, Sequence, Tuple, Type
 
 from . import base
 from .base import ImWidgetState
 
 __all__ = [
-    'same_row',
-    'row',
-
     'button',
     'checkbox',
     'combo_box',
@@ -38,25 +35,7 @@ def _strip_label(label:str):
     return label.split("#")[0]
 
 
-# Cursor methods
-def same_row(context:Optional[base.ImContext]=None):
-    """Ensure the next widget is placed in the same row as the previous one.
 
-    Args:
-        context (Optional[base.ImFrame]): The active ImTk frame.
-    """
-    context = context or base.get_context()
-    context.cursor.same_row()
-
-
-def row(context:Optional[base.ImContext]=None):
-    """Start a new row for placing widgets.
-    
-    Args:
-        context (Optional[base.ImFrame]): The Immediate Mode GUI frame context.
-    """
-    context = context or base.get_context()
-    return context.cursor.row()
 
 
 def imtk_widget(draw_fn=None):
@@ -149,7 +128,7 @@ def button(text:str, **kwargs:dict[str, Any]) -> ImWidgetState:
         You should never manually set the following arguments: *parent, text and command*
 
     Returns:
-        ImWidgetState: State of the widget. Can be used as a boolean to check if it was clicked. 
+        state: State of the widget. Can be used as a boolean to check if it was clicked. 
     """
     context = base.get_context()
     
@@ -170,6 +149,32 @@ def button(text:str, **kwargs:dict[str, Any]) -> ImWidgetState:
 
 @imtk_widget()
 def checkbox(label:str, value:bool, **kwargs) -> Tuple[ImWidgetState, bool]:
+    """A checkbox widget.
+
+    Example:
+    ```python
+    checked, current_value = imtk.checkbox("Enable Feature", value=True)
+    if checked:
+        print("Feature is enabled")
+    ```
+
+    Args:
+        label (str): The label associated with the checkbox.
+        value (bool): The initial state of the checkbox.
+
+    Keyword Args:
+        **kwargs: Additional keyword arguments to customize the checkbox.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.checkbox.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/checkbutton.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, text, and command*.
+
+    Returns:
+        - ImWidgetState: State of the widget. Can be used as a boolean to check if the checkbox state was modified.
+        - bool: The current state of the checkbox (checked or unchecked).
+    """
     context = base.get_context()
 
     idx = context.get_identifier(label)
@@ -196,7 +201,36 @@ def checkbox(label:str, value:bool, **kwargs) -> Tuple[ImWidgetState, bool]:
 
 @imtk_widget(draw_fn=_draw_widget_with_label)
 def input_text(label:str, text_:str, label_position:str='right', **kwargs) -> Tuple[ImWidgetState, str]:
-    """A input box for strings"""
+    """A widget to input text
+    
+    Example:
+    ```python
+    current_value = "Some Text"
+
+    changed, current_value = imtk.input_text(label="Text Input", text_=Some text)
+    if changed:
+        print("The text changed to", current_value)
+    ```
+
+    Args:
+        label (str): The label associated with the text input field.
+        text_ (str): The current text value displayed in the input field.
+
+    Keyword Args:
+        label_position (str, optional): The position of the label relative to the input field.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        **kwargs: Additional keyword arguments to customize the text input field.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.input_text.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/entry.html).
+    
+    Note: 
+        You should never manually set the following arguments: *parent, text, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the text was modified.
+        value: The current text value in the input field. 
+    """
     if label_position not in ['right', 'left', 'r', 'l', 'west', 'w', 'east', 'e']:
         raise ValueError("label_position must be in one of 'right', 'left', 'r', 'l', 'west', 'w', 'east' or 'e'")
     context = base.get_context()
@@ -300,6 +334,36 @@ def input_int(
     label_position:str='right',
     **kwargs
 ) -> Tuple[ImWidgetState, int]:
+    """A widget for inputting integer values within a specified range.
+
+    Example:
+    ```python
+    changed, current_value = imtk.input_int(label="Set Value", val=current_value, vmin=0, vmax=100)
+    if changed:
+        print("The value changed to", current_value)
+    ```
+
+    Args:
+        label (str): The label associated with the integer input field.
+        val (int): The initial integer value displayed in the input field.
+
+    Keyword Args:
+        vmin (int, optional): The minimum allowed value. Defaults to 0.
+        vmax (int, optional): The maximum allowed value. Defaults to 100.
+        label_position (str, optional): The position of the label relative to the input field.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        **kwargs: Additional keyword arguments to customize the integer input field.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.input_int.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/entry.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, text, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the value was modified.
+        int: The current integer value in the input field.
+    """
     return _spinbox(
         string_to_val=int,
         val_to_string=str,
@@ -323,6 +387,38 @@ def input_float(
     increment:float=0.1,
     **kwargs
 ) -> Tuple[ImWidgetState, float]:
+    """A widget for inputting floating-point values within a specified range.
+
+    Example:
+    ```python
+    changed, current_value = imtk.input_float(label="Set Value", val=current_value, vmin=0, vmax=100, increment=0.1)
+    if changed:
+        print("The value changed to", current_value)
+    ```
+
+    Args:
+        label (str): The label associated with the floating-point input field.
+        val (float): The initial floating-point value displayed in the input field.
+
+    Keyword Args:
+        vmin (float, optional): The minimum allowed value. Defaults to 0.
+        vmax (float, optional): The maximum allowed value. Defaults to 100.
+        label_position (str, optional): The position of the label relative to the input field.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        format_ (str, optional): The format string used to display the floating-point value. Defaults to "%.3f".
+        increment (float, optional): The increment step for the input field. Defaults to 0.1.
+        **kwargs: Additional keyword arguments to customize the floating-point input field.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.input_float.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/entry.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, text, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the value was modified.
+        float: The current floating-point value in the input field.
+    """
     return _spinbox(
         string_to_val=lambda v: float(v.replace(",", ".")),
         val_to_string=lambda v: format_ % v,
@@ -400,6 +496,36 @@ def float_slider(
     label_position:str='right',
     **kwargs
 ) -> Tuple[ImWidgetState, float]:
+    """A slider widget for selecting floating-point values within a specified range.
+
+    Example:
+    ```python
+    changed, current_value = imtk.float_slider(label="Adjust Value", val=current_value, vmin=0.0, vmax=1.0)
+    if changed:
+        print("The value changed to", current_value)
+    ```
+
+    Args:
+        label (str): The label associated with the float slider.
+        val (float): The initial floating-point value displayed on the slider.
+
+    Keyword Args:
+        vmin (float, optional): The minimum allowed value. Defaults to 0.0.
+        vmax (float, optional): The maximum allowed value. Defaults to 1.0.
+        label_position (str, optional): The position of the label relative to the slider.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        **kwargs: Additional keyword arguments to customize the float slider.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.float_slider.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/scale.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, label, from_, to, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the value was modified.
+        value: The current value selected on the slider.
+    """
     return _slider(
         label=label, 
         val=val, 
@@ -420,6 +546,36 @@ def int_slider(
     label_position:str='right',
     **kwargs
 ) -> Tuple[ImWidgetState, int]:
+    """A slider widget for selecting integer values within a specified range.
+
+    Example:
+    ```python
+    changed, current_value = imtk.int_slider(label="Adjust Value", val=current_value, vmin=0, vmax=100)
+    if changed:
+        print("The value changed to", current_value)
+    ```
+
+    Args:
+        label (str): The label associated with the integer slider.
+        val (int): The initial integer value displayed on the slider.
+
+    Keyword Args:
+        vmin (int, optional): The minimum allowed value. Defaults to 0.
+        vmax (int, optional): The maximum allowed value. Defaults to 100.
+        label_position (str, optional): The position of the label relative to the slider.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        **kwargs: Additional keyword arguments to customize the integer slider.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.int_slider.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/scale.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, label, from_, to, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the value was modified.
+        value: The current integer value selected on the slider.
+    """
     return _slider(
         label=label, 
         val=val, 
@@ -439,6 +595,35 @@ def combo_box(
     label_position:str='right',
     **kwargs
 ) -> Tuple[ImWidgetState, int]:
+    """A combo box widget for selecting a value from a list of options.
+
+    Example:
+    ```python
+    changed, current_index = imtk.combo_box(label="Select Option", current_index=selected_index, values=["Option 1", "Option 2"])
+    if changed:
+        print("The selected option changed to", values[current_index])
+    ```
+
+    Args:
+        label (str): The label associated with the combo box.
+        current_index (int): The initial index of the selected value in the combo box.
+        values (Sequence[str]): The list of options displayed in the combo box.
+
+    Keyword Args:
+        label_position (str, optional): The position of the label relative to the combo box.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        **kwargs: Additional keyword arguments to customize the combo box.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.combo_box.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/optionmenu.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, label, variable, and command*.
+
+    Returns:
+        state: State of the widget. Can be used as a boolean to check if the selection was modified.
+        index: The current index of the selected value in the combo box.
+    """
     context = base.get_context()
     idx     = context.get_identifier(label)
 
@@ -506,8 +691,35 @@ def progress_bar(
     label_position:str='right',
     show_progress:bool=False,
     **kwargs
-):
-    """This progressbar will not return the given value"""
+) -> ImWidgetState:
+    """A progress bar widget for visualizing the progress of a task.
+
+    Example:
+    ```python
+    imtk.progress_bar(label="Loading", value=0.75, min_=0.0, max_=1.0, show_progress=True)
+    ```
+
+    Args:
+        label (str): The label associated with the progress bar.
+        value (float): The current value of the progress bar within the specified range.
+
+    Keyword Args:
+        min_ (float, optional): The minimum allowed value. Defaults to 0.0.
+        max_ (float, optional): The maximum allowed value. Defaults to 1.0.
+        label_position (str, optional): The position of the label relative to the progress bar.
+            Possible values: 'left', 'right'. Defaults to 'right'.
+        show_progress (bool, optional): Whether to display the current progress percentage next to the bar. Defaults to False.
+        **kwargs: Additional keyword arguments to customize the progress bar.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to tk.progress_bar.
+            See [Tkinter Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/ttk-Progressbar.html).
+            
+    Note: 
+        You should never manually set the following arguments: *parent, value, mode, variable, and command*.
+
+    Returns:
+        ImWidgetState: State of the progress bar. Since this widget cannot be active, you will probably ignore this return value.
+    """
     context = base.get_context()
 
     idx = context.get_identifier(label)
@@ -549,7 +761,31 @@ def horizontal_separator_draw(info:ImWidgetState, context:base.ImContext):
     cursor.add_widget(info, context, **info.custom_data)
 
 @imtk_widget(draw_fn=horizontal_separator_draw)
-def horizontal_separator(identifier:str, width:int=None, relwidth:float=0.95, **kwargs):
+def horizontal_separator(identifier:str, width:int=None, relwidth:float=0.95, **kwargs) -> ImWidgetState:
+    """A horizontal separator widget.
+
+    Example:
+    ```python
+    imtk.horizontal_separator("Separator 1", width=2, relwidth=0.8)
+    ```
+
+    Args:
+        identifier (str): A unique identifier for the widget.
+        width (int | None, optional): The width of the separator line in pixels. Defaults to None.
+        relwidth (float, optional): The relative width of the separator as a fraction of the parent's width. Defaults to 0.95.
+
+    Keyword Args:
+        **kwargs: Additional keyword arguments to customize the separator widget.
+            These arguments are defined by the concrete imtk backend implementation.
+            Usually, this includes at least all arguments available to ttk.Separator.
+            See [Tkinter TTK Reference](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/ttk-Separator.html).
+
+    Note:
+        You should never manually set the following arguments: *orient*.
+
+    Returns:
+        ImWidgetState: State of the widget.  Since this widget cannot be active, you will probably ignore this return value.
+    """
     context = base.get_context()
 
     idx = context.get_identifier(identifier)
