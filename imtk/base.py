@@ -68,6 +68,16 @@ class ImNamespace:
 class ImContext(abc.ABC):
     """
     Represents the main context for the Immediate Mode GUI.
+    Usually you inherit from an "Implementation" of this base class that already
+    implemented the [install_widgets][imtk.base.ImContext.install_widgets] method.
+
+    We provide ImContext implementations for the following backends:
+
+    - Tkinter
+    - TTK
+    - [ttkbootstrap](https://ttkbootstrap.readthedocs.io/en/latest/)
+
+    For all these backends we provide a Frame and Window class
 
     Args:
         refresh_mode (str): The mode for refreshing the GUI ('callback' or 'loop').
@@ -225,19 +235,6 @@ class ImContext(abc.ABC):
             loop_frequency (int | None): The loop frequency, applicable only when 'loop' mode is selected.
                 It represents the time interval (in milliseconds) between each refresh cycle. If method is
                 'loop', loop_frequency is required. If method is an integer.
-
-        Returns:
-            None
-
-        Example:
-            To set the refresh engine to 'callback' mode and initiate refreshing:
-            >>> set_refresh_engine('callback')
-
-            To set the refresh engine to 'loop' mode with a refresh frequency of 60 milliseconds:
-            >>> set_refresh_engine('loop', loop_frequency=60)
-
-            To change the loop frequency without altering the refresh mode:
-            >>> set_refresh_engine(30)  # Sets the loop frequency to 30 milliseconds
         """
         if isinstance(method, int):
             if loop_frequency is not None:
@@ -441,14 +438,51 @@ class ImContext(abc.ABC):
         Abstract method for drawing the GUI content.
 
         This method must be implemented in subclasses to define the GUI layout and elements.
+
+        Example
+        ```python
+        def draw(self):
+            if imtk.button("Button"):
+                print("Button was pressed")
+        ```
         """
         pass
     
 
     @abc.abstractmethod
     def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
-        """In this function you must populate
-        self._tk_widgets dict
+        """Install and configure widgets for the GUI.
+
+        This abstract method should be implemented by subclasses to define the set of widgets
+        that are available with the specific backend.
+
+        Returns:
+            Dict[str, Callable[[Any], tk.Widget]]: A dictionary mapping widget names to their factory functions.
+                The factory functions should take configuration parameters as arguments and return instances
+                of Tkinter widgets.
+
+        Example:
+        ```python
+        class MyCustomTTKBackend(ImContext):
+            def install_widgets(self) -> Dict[str, Callable[[Any], tk.Widget]]:
+                return {
+                    'button': ttk.Button,
+                    'checkbutton': ttk.Checkbutton,
+                    'combobox': ttk.Combobox,
+                    'entry': ttk.Entry,
+                    'label': ttk.Label,
+                    'scale': ttk.Scale,
+                    'spinbox': ttk.Spinbox,
+                    'progressbar': ttk.Progressbar,
+                    'scrollbar': ttk.Scrollbar,
+                    'labelframe': ttk.LabelFrame,
+                    'frame': ttk.Frame
+                }
+        ```
+
+        Note:
+            The keys in the returned dictionary represent widget names, and the values are
+            callable factory functions that create instances of the respective widgets.
         """
         pass
 
@@ -507,11 +541,14 @@ def namespace(name:str, context:Optional[ImContext]=None) -> ImNamespace:
         ImNamespace: An ImNamespace instance representing the created namespace.
 
     Example:
-        # Create a namespace within the active context using a 'with' statement
+    ```python
+        # Create a namespace and use it as a context manager
         with namespace("my_namespace"):
-            # Within this block, all widget identifiers and actions are scoped to 'my_namespace'
+            # Within this block, all widget identifiers and actions are 
+            # scoped to 'my_namespace'
             if imtk.button("A button"):
                 print("The button was clicked")
+    ```
     """
     context = context or get_context()
     return context.namespace(name)

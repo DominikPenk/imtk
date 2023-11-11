@@ -13,7 +13,6 @@ theme:
     logo: material/view-dashboard
 
 plugins:
-  - search
   - mkdocstrings:
       handlers:
         python:
@@ -42,6 +41,7 @@ nav:
     - install.md
     - tutorial.md
   - API:
+    - context.md
     - functional.md
     - layout.md
     - widgets.md

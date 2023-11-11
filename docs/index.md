@@ -4,6 +4,7 @@ Welcome to the documentation for ImTk, a library for building Immediate Mode GUI
 
 ## Modules in the documentation
 
+- [Context](context.md): Documentation of the core context of ImTk
 - [Functional](functional.md): Documentation for the core functions of ImTk.
 - [Layout](layout.md): Documentation for managing layouts with the `row` and `same_row` functions.
 - [Widgets](widgets.md): Documentation for custom widgets provided by ImTk.
